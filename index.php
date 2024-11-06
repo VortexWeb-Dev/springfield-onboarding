@@ -18,6 +18,7 @@
       overflow: auto;
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body class="text-gray-800">
@@ -44,9 +45,9 @@
       $result = $conn->query($query);
 
       if ($result && $result->num_rows > 0) {
-        $count = 0; 
+        $count = 0;
         while ($row = $result->fetch_assoc()) {
-          if ($count >= 3) { 
+          if ($count >= 3) {
             break;
           }
 
@@ -57,15 +58,23 @@
           $thumbnail_data = base64_encode($row['thumbnail_data']);
 
           echo "
-                <div class='flex flex-col bg-white border shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70 cursor-pointer open-pdf hover:shadow-lg' data-pdf='$pdf_data'>
+              <div class='flex flex-col bg-white border shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70 cursor-pointer open-pdf hover:shadow-lg' data-pdf='$pdf_data'>
+                <div class='flex justify-between items-center'>
+                  <div>
                     <h3 class='text-lg font-bold text-gray-800 dark:text-white'>$pdf_name</h3>
-                    <p class='mt-1 text-xs font-medium uppercase text-gray-500 dark:text-neutral-500 lowercase'>
-                        $created_at
-                    </p>
-                    
-                    <img class='mt-4 rounded object-cover object-center max-w-96 h-48' src='data:$thumbnail_type;base64,$thumbnail_data' width='100%' height='200px' alt='thumbnail' />
+                    <p class='mt-1 text-xs font-medium uppercase text-gray-500 dark:text-neutral-500 lowercase'>$created_at</p>
+                  </div>
+                  <button onclick=\"downloadPDF('$pdf_name', '$pdf_data')\" class='mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-200 ease-in-out'>
+                    <i class='fa-solid fa-download'></i>
+                  </button>
                 </div>
-            ";
+
+                  <img class='mt-4 rounded object-cover object-center max-w-96 h-48' src='data:$thumbnail_type;base64,$thumbnail_data' width='100%' height='200px' alt='thumbnail' />
+
+                  
+              </div>
+          ";
+
 
           $count++; // Increment the counter
         }
@@ -135,7 +144,7 @@
     document.getElementById('add-pdf-button').addEventListener('click', () => {
       document.getElementById('uploadModal').classList.remove('hidden');
     });
-
+    pdfViewer
     // Open PDF modal and render PDF
     document.querySelectorAll('.open-pdf').forEach(button => {
       button.addEventListener('click', () => {
@@ -202,6 +211,13 @@
       }
 
       return true;
+    }
+
+    function downloadPDF(pdfName, pdfData) {
+      const link = document.createElement('a');
+      link.href = `data:application/pdf;base64,${pdfData}`;
+      link.download = `${pdfName}.pdf`; // Sets the download file name
+      link.click(); // Triggers the download
     }
   </script>
 </body>
