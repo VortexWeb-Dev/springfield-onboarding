@@ -14,7 +14,7 @@
 
     #pdfViewer {
       height: calc(100vh - 50px);
-      width: calc(100vw - 150px);
+      width: calc(100vw - 100px);
       overflow: auto;
     }
   </style>
@@ -158,7 +158,7 @@
           pdfViewer.innerHTML = ''; // Clear previous content
           for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
             pdf.getPage(pageNum).then(page => {
-              const scale = 1.5;
+              const scale = 0.8;
               const viewport = page.getViewport({
                 scale: scale
               });
