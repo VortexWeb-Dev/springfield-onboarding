@@ -23,7 +23,7 @@
 
 <body class="text-gray-800">
   <div class="container mx-auto my-10">
-    <h1 class="text-4xl font-bold text-center text-black">Onboarding</h1>
+    <h1 class="text-4xl font-bold mb-10 text-center text-black">Onboarding</h1>
 
     <!-- Add PDF Button -->
     <button style="background-color: #003172;" id="add-pdf-button" class="absolute top-5 right-5 text-white py-2 px-4 rounded transition duration-200 ease-in-out hover:bg-blue-200">
