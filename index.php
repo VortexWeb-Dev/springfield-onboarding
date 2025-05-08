@@ -17,8 +17,24 @@
       width: calc(100vw - 100px);
       overflow: auto;
     }
+
+    .card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .thumbnail {
+      max-height: 200px;
+      object-fit: cover;
+    }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Bitrix JS SDK -->
+  <script src="https://api.bitrix24.com/api/v1/"></script>
 </head>
 
 <body class="text-gray-800">
@@ -31,7 +47,7 @@
       Add PDF
     </button>
 
-    <div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <?php
       function formatDate($dateString)
       {
@@ -41,16 +57,12 @@
 
       require_once './config/db.php';
       $conn = getDatabaseConnection();
-      $query = "SELECT * FROM pdf";
+      $query = "SELECT id, pdf_name, thumbnail_type, created_at, pdf_data, thumbnail_data FROM pdf";
       $result = $conn->query($query);
 
       if ($result && $result->num_rows > 0) {
-        $count = 0;
         while ($row = $result->fetch_assoc()) {
-          if ($count >= 3) {
-            break;
-          }
-
+          $pdf_id = htmlspecialchars($row['id']);
           $pdf_name = htmlspecialchars($row['pdf_name']);
           $thumbnail_type = htmlspecialchars($row['thumbnail_type']);
           $created_at = formatDate(htmlspecialchars($row['created_at']));
@@ -58,34 +70,31 @@
           $thumbnail_data = base64_encode($row['thumbnail_data']);
 
           echo "
-              <div class='flex flex-col bg-white border shadow-sm rounded-xl p-4 md:p-5 dark:bg-neutral-900 dark:border-neutral-700 dark:shadow-neutral-700/70 cursor-pointer open-pdf hover:shadow-lg' data-pdf='$pdf_data'>
-                <div class='flex justify-between items-center'>
+              <div class='card flex flex-col bg-white border rounded-xl p-6 dark:bg-neutral-900 dark:border-neutral-700 cursor-pointer open-pdf' data-pdf='$pdf_data' data-id='$pdf_id'>
+                <div class='flex justify-between items-center mb-4'>
                   <div>
                     <h3 class='text-lg font-bold text-gray-800 dark:text-white'>$pdf_name</h3>
                     <p class='mt-1 text-xs font-medium uppercase text-gray-500 dark:text-neutral-500 lowercase'>$created_at</p>
                   </div>
-                  <button onclick=\"downloadPDF('$pdf_name', '$pdf_data')\" class='mt-4 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-200 ease-in-out'>
-                    <i class='fa-solid fa-download'></i>
-                  </button>
+                  <div class='flex space-x-2'>
+                    <button onclick=\"downloadPDF('$pdf_name', '$pdf_data')\" class='bg-gray-600 hover:bg-gray-700 text-white py-1 px-3 rounded transition duration-200'>
+                      <i class='fa-solid fa-download'></i>
+                    </button>
+                    <button class='delete-pdf hidden bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded transition duration-200' data-id='$pdf_id'>
+                      <i class='fa-solid fa-trash'></i>
+                    </button>
+                  </div>
                 </div>
-
-                  <img class='mt-4 rounded object-cover object-center max-w-96 h-48' src='data:$thumbnail_type;base64,$thumbnail_data' width='100%' height='200px' alt='thumbnail' />
-
-                  
+                <img class='thumbnail rounded w-full lazy' data-src='data:$thumbnail_type;base64,$thumbnail_data' alt='thumbnail' />
               </div>
           ";
-
-
-          $count++; // Increment the counter
         }
       } else {
         echo "<p class='text-center text-gray-500'>Start uploading your PDF.</p>";
       }
 
-
       $conn->close();
       ?>
-
     </div>
   </div>
 
@@ -93,28 +102,20 @@
   <div id="uploadModal" class="fixed inset-0 bg-gray-800 bg-opacity-70 hidden z-50 flex items-center justify-center">
     <form id="uploadForm" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md" enctype="multipart/form-data" method="POST" action="./actions/upload_pdf.php" onsubmit="return validateFileSize()">
       <h2 class="text-2xl font-semibold mb-6 text-gray-800">Upload PDF</h2>
-
-      <!-- PDF Name Input -->
       <div class="mb-4">
         <label for="pdf_name" class="block text-sm font-medium text-gray-700 mb-2">PDF Name</label>
         <input type="text" id="pdf_name" name="pdf_name" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Enter PDF name" required />
       </div>
-
-      <!-- PDF File Input -->
       <div class="mb-4">
         <label for="pdf_file" class="block text-sm font-medium text-gray-700 mb-2">Upload PDF File</label>
         <input type="file" id="pdf_file" accept="application/pdf" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" name="pdf_file" required />
         <p class="text-xs text-gray-500 mt-1">Max file size: 5MB</p>
       </div>
-
-      <!-- Thumbnail File Input -->
       <div class="mb-4">
         <label for="thumbnail_file" class="block text-sm font-medium text-gray-700 mb-2">Upload Thumbnail Image</label>
         <input type="file" id="thumbnail_file" accept="image/*" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" name="thumbnail_file" required />
         <p class="text-xs text-gray-500 mt-1">Max file size: 5MB</p>
       </div>
-
-      <!-- Buttons -->
       <div class="flex justify-end">
         <button id="closeModal" type="button" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded mr-2 transition duration-200 ease-in-out">
           Cancel
@@ -124,70 +125,100 @@
     </form>
   </div>
 
-  <!-- PDF Viewer Modal -->
+  <!-- PDF Viewer Modal (Unchanged) -->
   <div id="pdfModal" class="fixed h-screen w-screen inset-0 bg-gray-800 bg-opacity-50 hidden z-50 flex items-center justify-end">
     <div class="relative bg-white p-6 ">
-      <!-- Close Button Positioned Outside -->
       <button id="closePdfModal" class="absolute top-2 -left-10 bg-blue-300 p-2 rounded-tl-full rounded-bl-full focus:ring-2 focus:ring-blue-500 focus:outline-none ">
         <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M19.207 6.207a1 1 0 0 0-1.414-1.414L12 10.586 6.207 4.793a1 1 0 0 0-1.414 1.414L10.586 12l-5.793 5.793a1 1 0 1 0 1.414 1.414L12 13.414l5.793 5.793a1 1 0 0 0 1.414-1.414L13.414 12l5.793-5.793z" fill="#000000" />
         </svg>
       </button>
-
-      <!-- Modal Content -->
       <div id="pdfViewer">Loading...</div>
     </div>
   </div>
 
   <script>
+    // Lazy Loading with Intersection Observer
+    const lazyImages = document.querySelectorAll('img.lazy');
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          img.classList.remove('lazy');
+          observer.unobserve(img);
+        }
+      });
+    });
+    lazyImages.forEach(img => observer.observe(img));
+
+    // Debounce Function
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
     // Open Upload Modal
     document.getElementById('add-pdf-button').addEventListener('click', () => {
       document.getElementById('uploadModal').classList.remove('hidden');
     });
-    pdfViewer
+
     // Open PDF modal and render PDF
-    document.querySelectorAll('.open-pdf').forEach(button => {
-      button.addEventListener('click', () => {
-        const pdfData = button.getAttribute('data-pdf');
-        const pdfViewer = document.getElementById('pdfViewer');
-        const loadingTask = pdfjsLib.getDocument({
-          data: atob(pdfData)
-        }); // Decode base64
+    const openPDF = debounce((button) => {
+      const pdfData = button.getAttribute('data-pdf');
+      const pdfViewer = document.getElementById('pdfViewer');
+      const loadingTask = pdfjsLib.getDocument({
+        data: atob(pdfData)
+      });
 
-        loadingTask.promise.then(pdf => {
-          pdfViewer.innerHTML = ''; // Clear previous content
-          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            pdf.getPage(pageNum).then(page => {
-              const scale = 0.8;
-              const viewport = page.getViewport({
-                scale: scale
-              });
-              const canvas = document.createElement('canvas');
-              canvas.style.margin = '0 auto';
-              const context = canvas.getContext('2d');
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              pdfViewer.appendChild(canvas);
-
-              const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-              };
-              page.render(renderContext);
+      loadingTask.promise.then(pdf => {
+        pdfViewer.innerHTML = '';
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          pdf.getPage(pageNum).then(page => {
+            const scale = 0.8;
+            const viewport = page.getViewport({
+              scale: scale
             });
-          }
-        }).catch(error => {
-          console.error('Error loading PDF: ', error);
-        });
+            const canvas = document.createElement('canvas');
+            canvas.style.margin = '0 auto';
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            pdfViewer.appendChild(canvas);
 
-        document.getElementById('pdfModal').classList.remove('hidden');
+            const renderContext = {
+              canvasContext: context,
+              viewport: viewport
+            };
+            page.render(renderContext);
+          });
+        }
+      }).catch(error => {
+        console.error('Error loading PDF: ', error);
+      });
+
+      document.getElementById('pdfModal').classList.remove('hidden');
+    }, 300);
+
+    document.querySelectorAll('.open-pdf').forEach(button => {
+      button.addEventListener('click', (e) => {
+        if (!e.target.closest('.delete-pdf, .fa-download')) {
+          openPDF(button);
+        }
       });
     });
 
     // Close PDF modal
     document.getElementById('closePdfModal').addEventListener('click', () => {
       document.getElementById('pdfModal').classList.add('hidden');
-      document.getElementById('pdfViewer').innerHTML = 'Loading...'; // Reset content
+      document.getElementById('pdfViewer').innerHTML = 'Loading...';
     });
 
     // Close Upload modal
@@ -213,12 +244,55 @@
       return true;
     }
 
+    // Download PDF
     function downloadPDF(pdfName, pdfData) {
       const link = document.createElement('a');
       link.href = `data:application/pdf;base64,${pdfData}`;
-      link.download = `${pdfName}.pdf`; // Sets the download file name
-      link.click(); // Triggers the download
+      link.download = `${pdfName}.pdf`;
+      link.click();
     }
+
+    // Bitrix SDK: Get Current User ID and Show Delete Button
+    BX24.init(() => {
+      BX24.callMethod('user.current', {}, (result) => {
+        if (result.error()) {
+          console.error('Error fetching user:', result.error());
+          return;
+        }
+        const userId = result.data().ID;
+        const allowedUserIds = [8, 267, 1, 289];
+        if (allowedUserIds.includes(parseInt(userId))) {
+          document.querySelectorAll('.delete-pdf').forEach(button => {
+            button.classList.remove('hidden');
+            button.addEventListener('click', () => {
+              const pdfId = button.getAttribute('data-id');
+              if (confirm('Are you sure you want to delete this PDF?')) {
+                fetch('./actions/delete_pdf.php', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `id=${pdfId}`
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      button.closest('.card').remove();
+                      alert('PDF deleted successfully.');
+                    } else {
+                      alert('Error deleting PDF: ' + data.message);
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting PDF.');
+                  });
+              }
+            });
+          });
+        }
+      });
+    });
   </script>
 </body>
 
