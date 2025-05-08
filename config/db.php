@@ -2,10 +2,17 @@
 
 function getDatabaseConnection()
 {
+
     $servername = 'localhost';
-    $username = 'root';
-    $password = '';
-    $dbname = 'pdf-viewer';
+    $username = 'u884492537_user';
+    $password = 'REGl?F2p#';
+    $dbname = 'u884492537_pdf_viewer';
+
+    // $servername = 'localhost';
+    // $username = 'root';
+    // $password = '';
+    // $dbname = 'pdf-viewer';
+
     $port = 3306;
 
     $conn = new mysqli($servername, $username, $password, $dbname, $port);

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PDF Upload App</title>
+  <title>Springfield Onboarding</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet" />
   <style>
@@ -39,8 +39,7 @@
 
 <body class="text-gray-800">
   <div class="container mx-auto my-10">
-    <h1 class="text-4xl font-bold text-center text-black">SpringField</h1>
-    <h2 class="text-2xl font-semibold mb-10 text-center">Onboarding</h2>
+    <h1 class="text-4xl font-bold mb-10 text-center text-black">Onboarding</h1>
 
     <!-- Add PDF Button -->
     <button style="background-color: #003172;" id="add-pdf-button" class="absolute top-5 right-5 text-white py-2 px-4 rounded transition duration-200 ease-in-out hover:bg-blue-200">
